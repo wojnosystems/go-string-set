@@ -1,8 +1,16 @@
 package string_set
 
+const (
+	defaultCapacity = 10
+)
+
 func New() Interface {
+	return NewWithCapacity(defaultCapacity)
+}
+
+func NewWithCapacity(capacity int) Interface {
 	return &collection{
-		items: make(map[string]bool),
+		items: make(map[string]bool, capacity),
 	}
 }
 
@@ -31,7 +39,8 @@ func (c *collection) Len() int {
 	return len(c.items)
 }
 
-func (c *collection) Equal(o Immutable) (equal bool) {
+func (c *collection) IsEqual(o Immutable) (equal bool) {
+	// short-circuit test for speed
 	if c.Len() != o.Len() {
 		return false
 	}
@@ -55,7 +64,7 @@ func (c *collection) Union(o Immutable) (out Interface) {
 }
 
 func (c *collection) Subtract(o Immutable) (out Interface) {
-	out = New()
+	out = NewWithCapacity(c.Len())
 	c.Each(func(v string) {
 		if !o.Exists(v) {
 			out.Add(v)
@@ -65,7 +74,7 @@ func (c *collection) Subtract(o Immutable) (out Interface) {
 }
 
 func (c *collection) Intersection(o Immutable) (out Interface) {
-	out = New()
+	out = NewWithCapacity(c.Len())
 	o.Each(func(v string) {
 		if c.Exists(v) {
 			out.Add(v)
@@ -75,9 +84,11 @@ func (c *collection) Intersection(o Immutable) (out Interface) {
 }
 
 func (c *collection) ToSlice() (out []string) {
-	out = make([]string, 0, len(c.items))
+	out = make([]string, c.Len())
+	i := 0
 	for s, _ := range c.items {
-		out = append(out, s)
+		out[i] = s
+		i++
 	}
 	return
 }
@@ -121,9 +132,9 @@ func (c *collection) None(item func(v string) (didMatch bool)) (noneFound bool) 
 }
 
 func (c *collection) Copy() Interface {
-	outItems := make(map[string]bool, len(c.items))
+	outItems := NewWithCapacity(c.Len())
 	for s := range c.items {
-		outItems[s] = true
+		outItems.Add(s)
 	}
-	return &collection{items: outItems}
+	return outItems
 }

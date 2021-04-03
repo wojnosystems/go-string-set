@@ -175,7 +175,7 @@ func TestCollection_Equal(t *testing.T) {
 			for _, s := range c.b {
 				b.Add(s)
 			}
-			actual := a.Equal(b)
+			actual := a.IsEqual(b)
 			assert.Equal(t, c.expected, actual)
 		})
 	}
@@ -315,7 +315,7 @@ func TestCollection_Copy(t *testing.T) {
 				working.Add(s)
 			}
 			actual := working.Copy()
-			assert.True(t, working.Equal(actual))
+			assert.True(t, working.IsEqual(actual))
 		})
 	}
 }
@@ -456,7 +456,7 @@ func TestCollection_Union(t *testing.T) {
 	for caseName, c := range cases {
 		t.Run(caseName, func(t *testing.T) {
 			actual := c.a.Union(c.b)
-			assert.True(t, c.expected.Equal(actual))
+			assert.True(t, c.expected.IsEqual(actual))
 		})
 	}
 }
@@ -556,7 +556,7 @@ func TestCollection_Subtract(t *testing.T) {
 	for caseName, c := range cases {
 		t.Run(caseName, func(t *testing.T) {
 			actual := c.a.Subtract(c.b)
-			assert.True(t, c.expected.Equal(actual))
+			assert.True(t, c.expected.IsEqual(actual))
 		})
 	}
 }
@@ -651,7 +651,7 @@ func TestCollection_Intersection(t *testing.T) {
 	for caseName, c := range cases {
 		t.Run(caseName, func(t *testing.T) {
 			actual := c.a.Intersection(c.b)
-			assert.True(t, c.expected.Equal(actual))
+			assert.True(t, c.expected.IsEqual(actual))
 		})
 	}
 }
