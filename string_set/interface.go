@@ -38,16 +38,8 @@ type Iterator interface {
 	Each(item func(v string))
 
 	// EachCancelable is just like Each, but you can stop the iteration by returning
-	// string_set.Stop instead of string_set.Continue
+	// string_set.Break instead of string_set.Continue
 	EachCancelable(item func(v string) (next NextAction))
-
-	// Any returns true if predicate returns true for any item. Short-circuits and stops iteration when didMatch
-	// returns true. Returns false if no item caused predicate to return true
-	Any(predicate func(v string) (didMatch bool)) bool
-
-	// None return true if predicate returned false for every item in the set. If predicate returns true, short-circuit
-	// and return false from this method, indicating that at least 1 item matched
-	None(predicate func(v string) (didMatch bool)) bool
 }
 
 // Copier allows new sets to be created from existing sets

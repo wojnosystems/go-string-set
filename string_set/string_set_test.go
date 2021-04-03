@@ -172,7 +172,7 @@ func TestCollection_EachCancelable(t *testing.T) {
 	actual := NewWithCapacity(input.Len())
 	input.EachCancelable(func(v string) NextAction {
 		if actual.Len() > 1 {
-			return Stop
+			return Break
 		}
 		actual.Add(v)
 		return Continue
@@ -183,7 +183,7 @@ func TestCollection_EachCancelable(t *testing.T) {
 
 func TestCollection_Any(t *testing.T) {
 	cases := map[string]struct {
-		input    Iterator
+		input    *T
 		test     func(v string) bool
 		expected bool
 	}{
@@ -217,7 +217,7 @@ func TestCollection_Any(t *testing.T) {
 
 func TestCollection_None(t *testing.T) {
 	cases := map[string]struct {
-		input    Iterator
+		input    *T
 		test     func(v string) bool
 		expected bool
 	}{
