@@ -9,100 +9,80 @@ import (
 func TestCollection_Add(t *testing.T) {
 	cases := map[string]struct {
 		input    []string
-		expected []string
+		expected Immutable
 	}{
 		"empty": {
 			input:    []string{},
-			expected: []string{},
+			expected: Empty,
 		},
 		"one": {
 			input:    []string{"a"},
-			expected: []string{"a"},
+			expected: NewOf("a"),
 		},
 		"two": {
 			input:    []string{"a", "b"},
-			expected: []string{"a", "b"},
+			expected: NewOf("a", "b"),
 		},
 		"two with duplicate": {
 			input:    []string{"a", "b", "a"},
-			expected: []string{"a", "b"},
+			expected: NewOf("a", "b"),
 		},
 		"three with duplicates": {
 			input:    []string{"a", "a", "a"},
-			expected: []string{"a"},
+			expected: NewOf("a"),
 		},
 	}
 
 	for caseName, c := range cases {
 		t.Run(caseName, func(t *testing.T) {
-			actual := populateSetResult(func(set Interface) {
-				for _, item := range c.input {
-					set.Add(item)
-				}
-			})
-			assert.Equal(t, c.expected, actual)
+			actual := NewOf(c.input...)
+			assert.True(t, c.expected.IsEqualTo(actual))
 		})
 	}
-}
-
-func populateSetResult(cb func(set Interface)) []string {
-	working := New()
-	cb(working)
-	actual := working.ToSlice()
-	sort.Strings(actual)
-	return actual
 }
 
 func TestCollection_Remove(t *testing.T) {
 	cases := map[string]struct {
-		input    []string
+		input    Interface
 		rm       []string
-		expected []string
+		expected Immutable
 	}{
 		"empty": {
-			input:    []string{},
+			input:    New(),
 			rm:       []string{},
-			expected: []string{},
+			expected: Empty,
 		},
 		"no items removed": {
-			input:    []string{"a", "b", "c"},
+			input:    NewOf("a", "b", "c"),
 			rm:       []string{},
-			expected: []string{"a", "b", "c"},
+			expected: NewOf("a", "b", "c"),
 		},
 		"single item removed": {
-			input:    []string{"a", "b", "c"},
+			input:    NewOf("a", "b", "c"),
 			rm:       []string{"b"},
-			expected: []string{"a", "c"},
+			expected: NewOf("a", "c"),
 		},
 		"all removed": {
-			input:    []string{"a", "b", "c"},
+			input:    NewOf("a", "b", "c"),
 			rm:       []string{"a", "b", "c"},
-			expected: []string{},
+			expected: Empty,
 		},
-		"non-existant item removed": {
-			input:    []string{"a", "b", "c"},
+		"non-existent item removed": {
+			input:    NewOf("a", "b", "c"),
 			rm:       []string{"x"},
-			expected: []string{"a", "b", "c"},
+			expected: NewOf("a", "b", "c"),
 		},
 	}
 
 	for caseName, c := range cases {
 		t.Run(caseName, func(t *testing.T) {
-			actual := populateSetResult(func(set Interface) {
-				for _, item := range c.input {
-					set.Add(item)
-				}
-
-				for _, item := range c.rm {
-					set.Remove(item)
-				}
-			})
-			assert.Equal(t, c.expected, actual)
+			c.input.RemoveMany(c.rm...)
+			assert.True(t, c.expected.IsEqualTo(c.input))
 		})
 	}
 }
 
-func TestCollection_Has(t *testing.T) {
+func TestCollection_Includes(t *testing.T) {
 	set := New()
 	assert.False(t, set.Includes("something"))
 	set.Add("something")
@@ -134,82 +114,66 @@ func TestCollection_Len(t *testing.T) {
 
 func TestCollection_IsEqualTo(t *testing.T) {
 	cases := map[string]struct {
-		a        []string
-		b        []string
+		a        Immutable
+		b        Immutable
 		expected bool
 	}{
 		"empty": {
-			a:        []string{},
-			b:        []string{},
+			a:        Empty,
+			b:        Empty,
 			expected: true,
 		},
 		"a items, b empty": {
-			a: []string{"a", "b"},
-			b: []string{},
+			a: NewOf("a", "b"),
+			b: Empty,
 		},
 		"a empty, b items": {
-			a: []string{},
-			b: []string{"a", "b"},
+			a: Empty,
+			b: NewOf("a", "b"),
 		},
 		"equal same order": {
-			a:        []string{"a", "b", "c", "d"},
-			b:        []string{"a", "b", "c", "d"},
+			a:        NewOf("a", "b", "c", "d"),
+			b:        NewOf("a", "b", "c", "d"),
 			expected: true,
 		},
 		"equal different order": {
-			a:        []string{"a", "b", "c", "d"},
-			b:        []string{"d", "c", "b", "a"},
+			a:        NewOf("a", "b", "c", "d"),
+			b:        NewOf("d", "c", "b", "a"),
 			expected: true,
 		},
 		"same length, different items": {
-			a: []string{"a", "b"},
-			b: []string{"c", "d"},
+			a: NewOf("a", "b"),
+			b: NewOf("c", "d"),
 		},
 	}
 
 	for caseName, c := range cases {
 		t.Run(caseName, func(t *testing.T) {
-			a := New()
-			for _, s := range c.a {
-				a.Add(s)
-			}
-			b := New()
-			for _, s := range c.b {
-				b.Add(s)
-			}
-			actual := a.IsEqualTo(b)
+			actual := c.a.IsEqualTo(c.b)
 			assert.Equal(t, c.expected, actual)
 		})
 	}
 }
 
 func TestCollection_Each(t *testing.T) {
-	input := []string{"a", "b", "c", "d"}
+	input := NewOf("a", "b", "c", "d")
 
-	working := New()
-	for _, s := range input {
-		working.Add(s)
-	}
-
-	actual := make([]string, 0, working.Len())
-	working.Each(func(v string) {
+	actual := make([]string, 0, input.Len())
+	input.Each(func(v string) {
 		actual = append(actual, v)
 	})
 
+	expected := input.ToSlice()
+	sort.Strings(expected)
 	sort.Strings(actual)
-	assert.Equal(t, input, actual)
+	assert.Equal(t, expected, actual)
 }
 
 func TestCollection_EachCancelable(t *testing.T) {
-	input := []string{"a", "b", "c", "d"}
+	input := NewOf("a", "b", "c", "d")
 
-	working := New()
-	for _, s := range input {
-		working.Add(s)
-	}
-
-	actual := make([]string, 0, working.Len())
-	working.EachCancelable(func(v string) NextAction {
+	actual := make([]string, 0, input.Len())
+	input.EachCancelable(func(v string) NextAction {
 		if len(actual) > 1 {
 			return Stop
 		}
@@ -223,24 +187,24 @@ func TestCollection_EachCancelable(t *testing.T) {
 func TestCollection_Any(t *testing.T) {
 
 	cases := map[string]struct {
-		input    []string
+		input    Iterator
 		test     func(v string) bool
 		expected bool
 	}{
 		"empty": {
-			input: []string{},
+			input: Empty,
 			test: func(v string) bool {
 				return true
 			},
 		},
 		"nothing matches": {
-			input: []string{"a", "b"},
+			input: NewOf("a", "b"),
 			test: func(v string) bool {
 				return v == "c"
 			},
 		},
 		"one thing matches": {
-			input: []string{"a", "b", "c"},
+			input: NewOf("a", "b", "c"),
 			test: func(v string) bool {
 				return v == "b"
 			},
@@ -250,37 +214,33 @@ func TestCollection_Any(t *testing.T) {
 
 	for caseName, c := range cases {
 		t.Run(caseName, func(t *testing.T) {
-			actual := New()
-			for _, s := range c.input {
-				actual.Add(s)
-			}
-			assert.Equal(t, c.expected, actual.Any(c.test))
+			assert.Equal(t, c.expected, c.input.Any(c.test))
 		})
 	}
 }
 
 func TestCollection_None(t *testing.T) {
 	cases := map[string]struct {
-		input    []string
+		input    Iterator
 		test     func(v string) bool
 		expected bool
 	}{
 		"empty": {
-			input: []string{},
+			input: Empty,
 			test: func(v string) bool {
 				return true
 			},
 			expected: true,
 		},
 		"nothing matches": {
-			input: []string{"a", "b"},
+			input: NewOf("a", "b"),
 			test: func(v string) bool {
 				return v == "c"
 			},
 			expected: true,
 		},
 		"one thing matches": {
-			input: []string{"a", "b", "c"},
+			input: NewOf("a", "b", "c"),
 			test: func(v string) bool {
 				return v == "b"
 			},
@@ -289,61 +249,50 @@ func TestCollection_None(t *testing.T) {
 
 	for caseName, c := range cases {
 		t.Run(caseName, func(t *testing.T) {
-			actual := New()
-			for _, s := range c.input {
-				actual.Add(s)
-			}
-			assert.Equal(t, c.expected, actual.None(c.test))
+			assert.Equal(t, c.expected, c.input.None(c.test))
 		})
 	}
 }
 
 func TestCollection_Copy(t *testing.T) {
 	cases := map[string]struct {
-		input []string
+		input Immutable
 	}{
 		"empty": {
-			input: []string{},
+			input: Empty,
 		},
 		"not empty": {
-			input: []string{"a", "b"},
+			input: NewOf("a", "b"),
 		},
 	}
 
 	for caseName, c := range cases {
 		t.Run(caseName, func(t *testing.T) {
-			working := New()
-			for _, s := range c.input {
-				working.Add(s)
-			}
-			actual := working.Copy()
-			assert.True(t, working.IsEqualTo(actual))
+			actual := c.input.Copy()
+			assert.True(t, c.input.IsEqualTo(actual))
 		})
 	}
 }
 
 func TestCollection_ToSlice(t *testing.T) {
 	cases := map[string]struct {
-		input    []string
+		input    Immutable
 		expected []string
 	}{
 		"empty": {
-			input:    []string{},
+			input:    Empty,
 			expected: []string{},
 		},
 		"not empty": {
-			input:    []string{"a", "b"},
+			input:    NewOf("a", "b"),
 			expected: []string{"a", "b"},
 		},
 	}
 
 	for caseName, c := range cases {
 		t.Run(caseName, func(t *testing.T) {
-			actual := populateSetResult(func(set Interface) {
-				for _, s := range c.input {
-					set.Add(s)
-				}
-			})
+			actual := c.input.ToSlice()
+			sort.Strings(actual)
 			assert.Equal(t, c.expected, actual)
 		})
 	}
@@ -356,102 +305,34 @@ func TestCollection_Union(t *testing.T) {
 		expected Immutable
 	}{
 		"empty": {
-			a:        New(),
-			b:        New(),
-			expected: New(),
+			a:        Empty,
+			b:        Empty,
+			expected: Empty,
 		},
 		"b empty": {
-			a: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			b: New(),
-			expected: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
+			a:        NewOf("a", "b"),
+			b:        Empty,
+			expected: NewOf("a", "b"),
 		},
 		"a empty": {
-			a: New(),
-			b: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			expected: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
+			a:        Empty,
+			b:        NewOf("a", "b"),
+			expected: NewOf("a", "b"),
 		},
 		"overlapping items": {
-			a: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			b: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			expected: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
+			a:        NewOf("a", "b"),
+			b:        NewOf("a", "b"),
+			expected: NewOf("a", "b"),
 		},
 		"unique items": {
-			a: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			b: func() Immutable {
-				s := New()
-				s.Add("c")
-				s.Add("d")
-				return s
-			}(),
-			expected: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				s.Add("c")
-				s.Add("d")
-				return s
-			}(),
+			a:        NewOf("a", "b"),
+			b:        NewOf("c", "d"),
+			expected: NewOf("a", "b", "c", "d"),
 		},
 		"partial overlap items": {
-			a: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			b: func() Immutable {
-				s := New()
-				s.Add("b")
-				s.Add("c")
-				return s
-			}(),
-			expected: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				s.Add("c")
-				return s
-			}(),
+			a:        NewOf("a", "b"),
+			b:        NewOf("c", "b"),
+			expected: NewOf("a", "b", "c"),
 		},
 	}
 
@@ -470,88 +351,34 @@ func TestCollection_Subtract(t *testing.T) {
 		expected Immutable
 	}{
 		"empty": {
-			a:        New(),
-			b:        New(),
-			expected: New(),
+			a:        Empty,
+			b:        Empty,
+			expected: Empty,
 		},
 		"b empty": {
-			a: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			b: New(),
-			expected: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
+			a:        NewOf("a", "b"),
+			b:        Empty,
+			expected: NewOf("a", "b"),
 		},
 		"a empty": {
-			a: New(),
-			b: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			expected: New(),
+			a:        Empty,
+			b:        NewOf("a", "b"),
+			expected: Empty,
 		},
 		"overlapping items": {
-			a: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			b: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			expected: New(),
+			a:        NewOf("a", "b"),
+			b:        NewOf("a", "b"),
+			expected: Empty,
 		},
 		"unique items": {
-			a: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			b: func() Immutable {
-				s := New()
-				s.Add("c")
-				s.Add("d")
-				return s
-			}(),
-			expected: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
+			a:        NewOf("a", "b"),
+			b:        NewOf("c", "d"),
+			expected: NewOf("a", "b"),
 		},
 		"partial overlap items": {
-			a: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			b: func() Immutable {
-				s := New()
-				s.Add("b")
-				s.Add("c")
-				return s
-			}(),
-			expected: func() Immutable {
-				s := New()
-				s.Add("a")
-				return s
-			}(),
+			a:        NewOf("a", "b"),
+			b:        NewOf("c", "b"),
+			expected: NewOf("a"),
 		},
 	}
 
@@ -570,83 +397,34 @@ func TestCollection_Intersection(t *testing.T) {
 		expected Immutable
 	}{
 		"empty": {
-			a:        New(),
-			b:        New(),
-			expected: New(),
+			a:        Empty,
+			b:        Empty,
+			expected: Empty,
 		},
 		"b empty": {
-			a: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			b:        New(),
-			expected: New(),
+			a:        NewOf("a", "b"),
+			b:        Empty,
+			expected: Empty,
 		},
 		"a empty": {
-			a: New(),
-			b: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			expected: New(),
+			a:        Empty,
+			b:        NewOf("a", "b"),
+			expected: Empty,
 		},
 		"overlapping items": {
-			a: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			b: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			expected: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
+			a:        NewOf("a", "b"),
+			b:        NewOf("a", "b"),
+			expected: NewOf("a", "b"),
 		},
 		"unique items": {
-			a: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			b: func() Immutable {
-				s := New()
-				s.Add("c")
-				s.Add("d")
-				return s
-			}(),
-			expected: New(),
+			a:        NewOf("a", "b"),
+			b:        NewOf("c", "d"),
+			expected: Empty,
 		},
 		"partial overlap items": {
-			a: func() Immutable {
-				s := New()
-				s.Add("a")
-				s.Add("b")
-				return s
-			}(),
-			b: func() Immutable {
-				s := New()
-				s.Add("b")
-				s.Add("c")
-				return s
-			}(),
-			expected: func() Immutable {
-				s := New()
-				s.Add("b")
-				return s
-			}(),
+			a:        NewOf("a", "b"),
+			b:        NewOf("b", "c"),
+			expected: NewOf("b"),
 		},
 	}
 

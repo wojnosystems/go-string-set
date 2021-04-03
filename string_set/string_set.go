@@ -8,10 +8,19 @@ const (
 // to other sets if you want to use IsEqualTo instead of testing with Len
 var Empty = (Immutable)(NewWithCapacity(0))
 
+// New creates a new String set, with a small default capacity
 func New() Interface {
 	return NewWithCapacity(defaultCapacity)
 }
 
+// NewOf is a convenience method to create a string set containing the items you specify
+func NewOf(items ...string) Interface {
+	ret := NewWithCapacity(len(items))
+	ret.AddMany(items...)
+	return ret
+}
+
+// NewWithCapacity creates a new, empty, string set with the provided capacity
 func NewWithCapacity(capacity int) Interface {
 	return &collection{
 		items: make(map[string]bool, capacity),
@@ -26,8 +35,20 @@ func (c *collection) Add(v string) {
 	c.items[v] = true
 }
 
+func (c *collection) AddMany(v ...string) {
+	for _, s := range v {
+		c.Add(s)
+	}
+}
+
 func (c *collection) Remove(v string) {
 	delete(c.items, v)
+}
+
+func (c *collection) RemoveMany(v ...string) {
+	for _, s := range v {
+		c.Remove(s)
+	}
 }
 
 func (c *collection) Includes(v string) bool {
@@ -90,7 +111,7 @@ func (c *collection) Intersection(o Immutable) (out Interface) {
 func (c *collection) ToSlice() (out []string) {
 	out = make([]string, c.Len())
 	i := 0
-	for s, _ := range c.items {
+	for s := range c.items {
 		out[i] = s
 		i++
 	}

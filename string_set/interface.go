@@ -5,8 +5,14 @@ type Mutable interface {
 	// Add an item to the set. If it already exists, this is just skipped and the item remains in the set
 	Add(v string)
 
+	// AddMany items to the set. Ignoring any duplicates
+	AddMany(v ...string)
+
 	// Remove an item from the set. If it doesn't exist, skip
 	Remove(v string)
+
+	// RemoveMany items from the set. Ignoring any non-existing items
+	RemoveMany(v ...string)
 }
 
 // Tester contains read-only methods to query the metadata about the contents of the set
