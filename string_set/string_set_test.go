@@ -158,34 +158,30 @@ func TestCollection_IsEqualTo(t *testing.T) {
 func TestCollection_Each(t *testing.T) {
 	input := NewOf("a", "b", "c", "d")
 
-	actual := make([]string, 0, input.Len())
+	actual := NewWithCapacity(input.Len())
 	input.Each(func(v string) {
-		actual = append(actual, v)
+		actual.Add(v)
 	})
 
-	expected := input.ToSlice()
-	sort.Strings(expected)
-	sort.Strings(actual)
-	assert.Equal(t, expected, actual)
+	assert.True(t, input.IsEqualTo(actual))
 }
 
 func TestCollection_EachCancelable(t *testing.T) {
 	input := NewOf("a", "b", "c", "d")
 
-	actual := make([]string, 0, input.Len())
+	actual := NewWithCapacity(input.Len())
 	input.EachCancelable(func(v string) NextAction {
-		if len(actual) > 1 {
+		if actual.Len() > 1 {
 			return Stop
 		}
-		actual = append(actual, v)
+		actual.Add(v)
 		return Continue
 	})
 
-	assert.Equal(t, 2, len(actual))
+	assert.Equal(t, 2, actual.Len())
 }
 
 func TestCollection_Any(t *testing.T) {
-
 	cases := map[string]struct {
 		input    Iterator
 		test     func(v string) bool
