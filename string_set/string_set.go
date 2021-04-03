@@ -19,9 +19,6 @@ func (c *collection) Remove(v string) {
 }
 
 func (c *collection) Exists(v string) bool {
-	if c.items == nil {
-		return false
-	}
 	_, ok := c.items[v]
 	return ok
 }
@@ -38,13 +35,14 @@ func (c *collection) Equal(o Immutable) (equal bool) {
 	if c.Len() != o.Len() {
 		return false
 	}
+	equal = true
 	c.EachCancelable(func(v string) NextAction {
 		if !o.Exists(v) {
+			equal = false
 			return Stop
 		}
 		return Continue
 	})
-	equal = true
 	return
 }
 

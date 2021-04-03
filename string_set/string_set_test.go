@@ -159,6 +159,10 @@ func TestCollection_Equal(t *testing.T) {
 			b:        []string{"d", "c", "b", "a"},
 			expected: true,
 		},
+		"same length, different items": {
+			a: []string{"a", "b"},
+			b: []string{"c", "d"},
+		},
 	}
 
 	for caseName, c := range cases {
@@ -171,7 +175,8 @@ func TestCollection_Equal(t *testing.T) {
 			for _, s := range c.b {
 				b.Add(s)
 			}
-			assert.Equal(t, c.expected, a.Equal(b))
+			actual := a.Equal(b)
+			assert.Equal(t, c.expected, actual)
 		})
 	}
 }
