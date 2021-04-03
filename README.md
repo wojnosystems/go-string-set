@@ -21,7 +21,7 @@ func main() {
   myPeople.Add("Gary")
   myPeople.Add("Bob")
   
-  if myPeople.Exists("Bob") {
+  if myPeople.Includes("Bob") {
   	// Bob exists in myPeople, so this code block executes
   }
   

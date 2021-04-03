@@ -102,19 +102,21 @@ func TestCollection_Remove(t *testing.T) {
 	}
 }
 
-func TestCollection_Exists(t *testing.T) {
+func TestCollection_Has(t *testing.T) {
 	set := New()
-	assert.False(t, set.Exists("something"))
+	assert.False(t, set.Includes("something"))
 	set.Add("something")
-	assert.True(t, set.Exists("something"))
-	assert.False(t, set.Exists("missing"))
+	assert.True(t, set.Includes("something"))
+	assert.False(t, set.Includes("missing"))
 }
 
 func TestCollection_IsEmpty(t *testing.T) {
 	set := New()
 	assert.True(t, set.IsEmpty())
+	assert.True(t, set.IsEqualTo(Empty))
 	set.Add("something")
 	assert.False(t, set.IsEmpty())
+	assert.False(t, set.IsEqualTo(Empty))
 }
 
 func TestCollection_Len(t *testing.T) {
@@ -130,7 +132,7 @@ func TestCollection_Len(t *testing.T) {
 	assert.Equal(t, 1, set.Len())
 }
 
-func TestCollection_Equal(t *testing.T) {
+func TestCollection_IsEqualTo(t *testing.T) {
 	cases := map[string]struct {
 		a        []string
 		b        []string
@@ -175,7 +177,7 @@ func TestCollection_Equal(t *testing.T) {
 			for _, s := range c.b {
 				b.Add(s)
 			}
-			actual := a.IsEqual(b)
+			actual := a.IsEqualTo(b)
 			assert.Equal(t, c.expected, actual)
 		})
 	}
@@ -315,7 +317,7 @@ func TestCollection_Copy(t *testing.T) {
 				working.Add(s)
 			}
 			actual := working.Copy()
-			assert.True(t, working.IsEqual(actual))
+			assert.True(t, working.IsEqualTo(actual))
 		})
 	}
 }
@@ -456,7 +458,7 @@ func TestCollection_Union(t *testing.T) {
 	for caseName, c := range cases {
 		t.Run(caseName, func(t *testing.T) {
 			actual := c.a.Union(c.b)
-			assert.True(t, c.expected.IsEqual(actual))
+			assert.True(t, c.expected.IsEqualTo(actual))
 		})
 	}
 }
@@ -556,7 +558,7 @@ func TestCollection_Subtract(t *testing.T) {
 	for caseName, c := range cases {
 		t.Run(caseName, func(t *testing.T) {
 			actual := c.a.Subtract(c.b)
-			assert.True(t, c.expected.IsEqual(actual))
+			assert.True(t, c.expected.IsEqualTo(actual))
 		})
 	}
 }
@@ -651,7 +653,7 @@ func TestCollection_Intersection(t *testing.T) {
 	for caseName, c := range cases {
 		t.Run(caseName, func(t *testing.T) {
 			actual := c.a.Intersection(c.b)
-			assert.True(t, c.expected.IsEqual(actual))
+			assert.True(t, c.expected.IsEqualTo(actual))
 		})
 	}
 }

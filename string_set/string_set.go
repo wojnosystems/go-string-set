@@ -4,6 +4,10 @@ const (
 	defaultCapacity = 10
 )
 
+// Empty is a convenience declaration: it's an empty set you can use to compare
+// to other sets if you want to use IsEqualTo instead of testing with Len
+var Empty = (Immutable)(NewWithCapacity(0))
+
 func New() Interface {
 	return NewWithCapacity(defaultCapacity)
 }
@@ -26,7 +30,7 @@ func (c *collection) Remove(v string) {
 	delete(c.items, v)
 }
 
-func (c *collection) Exists(v string) bool {
+func (c *collection) Includes(v string) bool {
 	_, ok := c.items[v]
 	return ok
 }
@@ -39,14 +43,14 @@ func (c *collection) Len() int {
 	return len(c.items)
 }
 
-func (c *collection) IsEqual(o Immutable) (equal bool) {
+func (c *collection) IsEqualTo(o Immutable) (equal bool) {
 	// short-circuit test for speed
 	if c.Len() != o.Len() {
 		return false
 	}
 	equal = true
 	c.EachCancelable(func(v string) NextAction {
-		if !o.Exists(v) {
+		if !o.Includes(v) {
 			equal = false
 			return Stop
 		}
@@ -66,7 +70,7 @@ func (c *collection) Union(o Immutable) (out Interface) {
 func (c *collection) Subtract(o Immutable) (out Interface) {
 	out = NewWithCapacity(c.Len())
 	c.Each(func(v string) {
-		if !o.Exists(v) {
+		if !o.Includes(v) {
 			out.Add(v)
 		}
 	})
@@ -76,7 +80,7 @@ func (c *collection) Subtract(o Immutable) (out Interface) {
 func (c *collection) Intersection(o Immutable) (out Interface) {
 	out = NewWithCapacity(c.Len())
 	o.Each(func(v string) {
-		if c.Exists(v) {
+		if c.Includes(v) {
 			out.Add(v)
 		}
 	})

@@ -11,8 +11,8 @@ type Mutable interface {
 
 // Tester contains read-only methods to query the metadata about the contents of the set
 type Tester interface {
-	// Exists returns true if the string is in the set, false if not found. Case-sensitive
-	Exists(v string) bool
+	// Includes returns true if the string is in the set, false if not found. Case-sensitive
+	Includes(v string) bool
 
 	// IsEmpty returns true if there are no items in the set, false if there is at least 1 item in the set
 	IsEmpty() bool
@@ -20,10 +20,10 @@ type Tester interface {
 	// Len returns the number of items in the set
 	Len() int
 
-	// Equal returns true both sets contain the same strings, false if they contain different numbers of items of
+	// IsEqualTo returns true both sets contain the same strings, false if they contain different numbers of items of
 	// values of items differ. Sets don't care about item ordering, so you can add items to the sets in any order and
 	// this will still be true.
-	IsEqual(o Immutable) bool
+	IsEqualTo(o Immutable) bool
 }
 
 // Iterator allows callers to loop over the contents of sets
